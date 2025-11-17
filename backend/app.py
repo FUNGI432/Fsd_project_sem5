@@ -4,6 +4,7 @@ Flask Backend for AI-Based Question Paper Moderation System
 Production-ready API with database integration
 """
 
+# ... existing imports ...
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -12,23 +13,35 @@ import json
 from datetime import datetime
 import sqlite3
 from pathlib import Path
+import tempfile
+import sys
 
 # Import our NLP modules
-import sys
 sys.path.append(str(Path(__file__).parent.parent))
 from core.nlp_analyzer import NLPAnalyzer
 from core.database import Database
+
+# ... existing code ...
+
+# Configuration - use temp directory for Vercel
+if os.environ.get('VERCEL'):
+    # Vercel environment
+    UPLOAD_TEMP_DIR = '/tmp/uploads'
+    DATABASE_PATH = '/tmp/moderation.db'
+else:
+    # Local development
+    UPLOAD_TEMP_DIR = 'uploads'
+    DATABASE_PATH = 'data/moderation.db'
+
+os.makedirs(UPLOAD_TEMP_DIR, exist_ok=True)
 
 app = Flask(__name__, static_folder='../frontend/build')
 CORS(app)
 
 # Configuration
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_TEMP_DIR
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['ALLOWED_EXTENSIONS'] = {'txt', 'pdf', 'doc', 'docx'}
-
-# Ensure upload folder exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Initialize database and NLP analyzer
 db = Database()
